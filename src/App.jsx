@@ -1,5 +1,6 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
-import React from 'react';
+import React, { useState } from 'react';
+import cn from 'classnames';
 import './App.scss';
 
 import usersFromServer from './api/users';
@@ -19,9 +20,25 @@ const products = productsFromServer.map(product => {
   };
 });
 
-console.log(products);
+const filteredByUser = nameOfUser => {
+  return products.filter(({ user }) => {
+    if (nameOfUser === 'All') {
+      return user;
+    } else {
+      return user.name === nameOfUser;
+    }
+  });
+};
+
+// console.log(products);
 
 export const App = () => {
+  const [userName, setUserName] = useState('All');
+
+  const filteredProducts = filteredByUser(userName);
+
+  // console.log(filteredProducts);
+
   return (
     <div className="section">
       <div className="container">
@@ -32,21 +49,25 @@ export const App = () => {
             <p className="panel-heading">Filters</p>
 
             <p className="panel-tabs has-text-weight-bold">
-              <a data-cy="FilterAllUsers" href="#/">
+              <a
+                className={cn({ 'is-active': userName === 'All' })}
+                data-cy="FilterAllUsers"
+                href="#/"
+                onClick={() => setUserName('All')}
+              >
                 All
               </a>
-
-              <a data-cy="FilterUser" href="#/">
-                User 1
-              </a>
-
-              <a data-cy="FilterUser" href="#/" className="is-active">
-                User 2
-              </a>
-
-              <a data-cy="FilterUser" href="#/">
-                User 3
-              </a>
+              {usersFromServer.map(user => (
+                <a
+                  className={cn({ 'is-active': userName === user.name })}
+                  key={user.id}
+                  data-cy="FilterUser"
+                  href="#/"
+                  onClick={() => setUserName(user.name)}
+                >
+                  {user.name}
+                </a>
+              ))}
             </p>
 
             <div className="panel-block">
@@ -177,12 +198,13 @@ export const App = () => {
             </thead>
 
             <tbody>
-              {products.map(product => {
-                const { id, name, categoryId, category, user } = product;
+              {filteredProducts.map(product => {
+                const { id, name, category, user } = product;
                 const { icon, title } = category;
                 const { name: userName } = user;
+
                 return (
-                  <tr data-cy="Product">
+                  <tr data-cy="Product" key={id}>
                     <td className="has-text-weight-bold" data-cy="ProductId">
                       {id}
                     </td>
