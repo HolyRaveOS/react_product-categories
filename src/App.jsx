@@ -20,33 +20,54 @@ const products = productsFromServer.map(product => {
   };
 });
 
-const filteredByUser = nameOfUser => {
-  return products.filter(({ user }) => {
-    if (nameOfUser === 'All') {
-      return user;
-    } else {
-      return user.name === nameOfUser;
-    }
-  });
-};
-
 export const App = () => {
   const [nameOfUser, setNameOfUser] = useState('All');
-  const filteredProducts = filteredByUser(nameOfUser);
   const [query, setQuery] = useState('');
-  const [visibleProducts, setVisibleProducts] = useState(filteredProducts);
+  const [visibleProducts, setVisibleProducts] = useState(products);
 
-  function handleSortProducts(queryVal) {
-    setQuery(queryVal);
-    setVisibleProducts(
-      filteredProducts.filter(product => {
-        return product.name
-          .toLowerCase()
-          .trim()
-          .includes(queryVal.toLowerCase().trim());
-      }),
+  const handleFilterByUserName = name => {
+    setNameOfUser(name);
+    const filteredProducts = products.filter(product => {
+      if (name === 'All') {
+        return true;
+      } else {
+        return product.user.name === name;
+      }
+    });
+
+    const filteredAndSearchedProducts = filterAndSearchProducts(
+      filteredProducts,
+      query,
     );
-  }
+
+    setVisibleProducts(filteredAndSearchedProducts);
+  };
+
+  const handleSortProducts = queryVal => {
+    setQuery(queryVal);
+    const filteredProducts =
+      nameOfUser === 'All'
+        ? products
+        : products.filter(({ user }) => user.name === nameOfUser);
+    const filteredAndSearchedProducts = filterAndSearchProducts(
+      filteredProducts,
+      queryVal,
+    );
+
+    setVisibleProducts(filteredAndSearchedProducts);
+  };
+
+  const filterAndSearchProducts = (productsToFilter, queryValue) => {
+    return productsToFilter.filter(product =>
+      product.name.toLowerCase().includes(queryValue.toLowerCase().trim()),
+    );
+  };
+
+  const handleReset = () => {
+    setQuery('');
+    setNameOfUser('All');
+    setVisibleProducts(products);
+  };
 
   return (
     <div className="section">
@@ -62,7 +83,7 @@ export const App = () => {
                 className={cn({ 'is-active': nameOfUser === 'All' })}
                 data-cy="FilterAllUsers"
                 href="#/"
-                onClick={() => setNameOfUser('All')}
+                onClick={() => handleFilterByUserName('All')}
               >
                 All
               </a>
@@ -72,7 +93,7 @@ export const App = () => {
                   key={user.id}
                   data-cy="FilterUser"
                   href="#/"
-                  onClick={() => setNameOfUser(user.name)}
+                  onClick={() => handleFilterByUserName(user.name)}
                 >
                   {user.name}
                 </a>
@@ -98,10 +119,7 @@ export const App = () => {
                   <span className="icon is-right">
                     {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
                     <button
-                      onClick={() => {
-                        setQuery('');
-                        setVisibleProducts(filteredByUser(nameOfUser));
-                      }}
+                      onClick={() => handleSortProducts('')}
                       data-cy="ClearButton"
                       type="button"
                       className="delete"
@@ -146,6 +164,7 @@ export const App = () => {
 
             <div className="panel-block">
               <a
+                onClick={handleReset}
                 data-cy="ResetAllButton"
                 href="#/"
                 className="button is-link is-outlined is-fullwidth"
