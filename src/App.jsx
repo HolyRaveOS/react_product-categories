@@ -30,14 +30,23 @@ const filteredByUser = nameOfUser => {
   });
 };
 
-// console.log(products);
-
 export const App = () => {
-  const [userName, setUserName] = useState('All');
+  const [nameOfUser, setNameOfUser] = useState('All');
+  const filteredProducts = filteredByUser(nameOfUser);
+  const [query, setQuery] = useState('');
+  const [visibleProducts, setVisibleProducts] = useState(filteredProducts);
 
-  const filteredProducts = filteredByUser(userName);
-
-  // console.log(filteredProducts);
+  function handleSortProducts(queryVal) {
+    setQuery(queryVal);
+    setVisibleProducts(
+      filteredProducts.filter(product => {
+        return product.name
+          .toLowerCase()
+          .trim()
+          .includes(queryVal.toLowerCase().trim());
+      }),
+    );
+  }
 
   return (
     <div className="section">
@@ -50,20 +59,20 @@ export const App = () => {
 
             <p className="panel-tabs has-text-weight-bold">
               <a
-                className={cn({ 'is-active': userName === 'All' })}
+                className={cn({ 'is-active': nameOfUser === 'All' })}
                 data-cy="FilterAllUsers"
                 href="#/"
-                onClick={() => setUserName('All')}
+                onClick={() => setNameOfUser('All')}
               >
                 All
               </a>
               {usersFromServer.map(user => (
                 <a
-                  className={cn({ 'is-active': userName === user.name })}
+                  className={cn({ 'is-active': nameOfUser === user.name })}
                   key={user.id}
                   data-cy="FilterUser"
                   href="#/"
-                  onClick={() => setUserName(user.name)}
+                  onClick={() => setNameOfUser(user.name)}
                 >
                   {user.name}
                 </a>
@@ -73,25 +82,32 @@ export const App = () => {
             <div className="panel-block">
               <p className="control has-icons-left has-icons-right">
                 <input
+                  value={query}
+                  onChange={event => handleSortProducts(event.target.value)}
                   data-cy="SearchField"
                   type="text"
                   className="input"
                   placeholder="Search"
-                  value="qwe"
                 />
 
                 <span className="icon is-left">
                   <i className="fas fa-search" aria-hidden="true" />
                 </span>
 
-                <span className="icon is-right">
-                  {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
-                  <button
-                    data-cy="ClearButton"
-                    type="button"
-                    className="delete"
-                  />
-                </span>
+                {query && (
+                  <span className="icon is-right">
+                    {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
+                    <button
+                      onClick={() => {
+                        setQuery('');
+                        setVisibleProducts(filteredByUser(nameOfUser));
+                      }}
+                      data-cy="ClearButton"
+                      type="button"
+                      className="delete"
+                    />
+                  </span>
+                )}
               </p>
             </div>
 
@@ -198,7 +214,7 @@ export const App = () => {
             </thead>
 
             <tbody>
-              {filteredProducts.map(product => {
+              {visibleProducts.map(product => {
                 const { id, name, category, user } = product;
                 const { icon, title } = category;
                 const { name: userName } = user;
